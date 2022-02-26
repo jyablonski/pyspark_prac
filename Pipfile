@@ -11,6 +11,7 @@ pyspark = "*"
 pandas = "*"
 pyarrow = "*"
 black = "*"
+boto3 = "*"
 
 [requires]
 python_version = "3.8"
