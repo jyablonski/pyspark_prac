@@ -19,13 +19,13 @@ def sample_transform_jacob(input_df: DataFrame) -> DataFrame:
 @pytest.mark.usefixtures("spark_session")
 def test_sample_transform_jacob(spark_session):
     test_df = spark_session.createDataFrame(
-        [
+        data = [
             ('red', 'Jacob', 5),
             ('red', 'Jacob', 50),
             ('green', 'Jacob2', 20),
             ('black', 'Jacob3', 1000)
         ],
-        ['color', 'owner', 'price']
+        schema = ['color', 'owner', 'price']
     )
     new_df = sample_transform_jacob(test_df)
     assert new_df.count() == 1
