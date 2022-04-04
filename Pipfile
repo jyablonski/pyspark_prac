@@ -5,13 +5,14 @@ verify_ssl = true
 
 [dev-packages]
 ipykernel = "*"
+black = "*"
 
 [packages]
-pyspark = "*"
-pandas = "*"
-pyarrow = "*"
-black = "*"
-boto3 = "*"
+pyspark = "==3.2.1"
+pandas = "==1.4.2"
+pyarrow = "==7.0.0"
+boto3 = "==1.21.32"
+delta-spark = "==1.1.0"
 
 [requires]
 python_version = "3.8"
