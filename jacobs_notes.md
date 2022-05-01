@@ -157,7 +157,9 @@ df_pandas = df.toPandas()
 
 
 # UDFs
+Python UDFs in Spark are considerably slower than ones written in Scala.  Data Types in Python don't match 1:1 to Java, so when using these UDFs the data has to be serialized from Java, read into a separate Python process in order to do the calculation, and the result has to be serialized/deserialized again before returning to the JVM and gathering the result.  So there is a performance hit.
 
+```
 from pyspark.sql.functions import pandas_udf
 
 @pandas_udf('long')
@@ -166,6 +168,7 @@ def pandas_plus_one(series: pd.Series) -> pd.Series:
     return series + 1
 
 df.select(pandas_plus_one(df.a)).show()
+```
 
 # History
 Hadoop came out in 2006 which enabled distributing computing: using multiple machines on 1 task by distributing work to them and then collecting and aggregating it together.  This framework to accomplish this task was called MapReduce and it was written in Java.  However, Hadoop was slow and had to write to disk and RAM was not efficiently being used.
