@@ -166,3 +166,42 @@ def pandas_plus_one(series: pd.Series) -> pd.Series:
     return series + 1
 
 df.select(pandas_plus_one(df.a)).show()
+
+# History
+Hadoop came out in 2006 which enabled distributing computing: using multiple machines on 1 task by distributing work to them and then collecting and aggregating it together.  This framework to accomplish this task was called MapReduce and it was written in Java.  However, Hadoop was slow and had to write to disk and RAM was not efficiently being used.
+
+Facebook created Hive in 2010 to improve this by using a flavor of SQL called HQL to write MapReduce jobs in a SQL-like language.  However, it still kinda sucked.
+
+Spark was released in 2014 to address the above drawbacks.  It leverages as much RAM as possible which vastly increases compute time which is where the `50-100x faster` statistic comes from.
+
+# Troubleshooting
+If you're having OutOfMemory errors - make sure your nodes are utilizing as much RAM as possible and it isn't set to a default number.  A lot of these solutions literally just say "Increase the RAM" like yeet.
+
+```
+spark = SparkSession.builder \
+    .master('local[*]') \
+    .config("spark.driver.memory", "15g") \
+    .appName('my-cool-app') \
+    .getOrCreate()
+```
+
+[Article](https://medium.com/swlh/spark-oom-error-closeup-462c7a01709d)
+[Article 2](https://mungingdata.com/apache-spark/broadcast-joins/)
+
+[Video](https://databricks.com/session_na20/on-improving-broadcast-joins-in-apache-spark-sql#:~:text=Broadcast%20join%20is%20an%20important,partitions%20of%20the%20other%20relation.)
+Spark splits data up on different nodes so it can do its processing efficiently.  Traditionally, joins are hard because of this.  Broadcast joins are a way of joining 2 relations by first sending the smaller one (broadcasting it) to all nodes in the cluster.  Then it can do the join without going through a shuffle process in the larger DataFrame.
+
+use `.explain()` at the end of your Spark Job to see the explain plan and see what's going on.  Sometimes Spark will automatically be efficient for you, sometimes the code will be too complex and you'll have to intervene and handle things like Broadcast Joins yourself.
+
+There is a `spark.sql.autoBroadcastJoinThreshold` value you can adjust depending on if you run into issues or not.
+
+Think about outliers when running the queries, something about skew and partitions and if the data is skewed then a few of the nodes might get a shit ton of the data and you'll have OOM issues.
+
+# SQL
+Do the normal SparkSession entrypoint and then create a tempview with your data, then call `spark.table('tablename')` on the view you just created.  You can then do normal SQL Expression with `spark.sql('select x from tablename')`
+```
+spark.range(1, 20).createOrReplaceTempView("test")
+df = spark.table("test")
+
+spark.sql("select id from test").show()
+```
