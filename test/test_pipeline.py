@@ -8,12 +8,16 @@ from pyspark.sql import DataFrame
 
 #####
 def sample_transform_jacob(input_df: DataFrame) -> DataFrame:
-    inter_df = input_df.where(input_df['color'] == \
-                              F.lit('red')).groupBy('owner').agg(F.sum('price').alias('grouped_price'))
+    inter_df = input_df.where(input_df['color'] == F.lit('red')) \
+        .groupBy('owner') \
+        .agg(F.sum('price') \
+        .alias('grouped_price')
+    )
 
     output_df = inter_df.select('owner', 'grouped_price', \
-                                F.when(F.col('grouped_price') > 10, 1).otherwise(0).alias('indicator')).where(
-                F.col('indicator') == F.lit(1))
+                                F.when(F.col('grouped_price') > 10, 1).otherwise(0).alias('indicator')) \
+                                .where(F.col('indicator') == F.lit(1)
+                                )
     return output_df
 
 @pytest.mark.usefixtures("spark_session")
