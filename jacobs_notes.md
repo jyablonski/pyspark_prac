@@ -1,7 +1,7 @@
 # Spark Entrypoint
 `spark = SparkSession.builder.appName("Practice").getOrCreate()` is the entrypoint into Spark.  Before version 2.x.x, it was SparkContext or SQLContext or Hivecontext, but now SparkSession inherits all 3 for backwards compatibility.  You should only ever use `SparkSession`.
 
-SparkContext establishes communication with the cluster and resource managers to coordinate and execute jobs.  Need to set an app name and then use getOrCreate().
+SparkContext establishes communication with the cluster and resource managers to coordinate and execute jobs on the worker nodes that are either remote or that get spun up locally on your computer.  Need to set an app name and then use getOrCreate().
 
 `import pyspark`
 `from pyspark.sql import SparkSession`
@@ -208,3 +208,69 @@ df = spark.table("test")
 
 spark.sql("select id from test").show()
 ```
+
+Adding packages or JARs (java archive files) to PySpark can be done in multiple ways.  Setting ENV Variables, adding to $SPARK_HOME/conf, etc.
+    * Easiest way seems to be adding config variables when you create your Spark Session.
+    * `spark = SparkSession.builder.appName('my_awesome')\
+    .config('spark.jars.packages', 'org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1')\
+    .getOrCreate()`
+    * When you create the Spark Session it will download any specific addons you specify and use them in your Spark Job.
+      * Make sure versions match here - Spark Version 3.2.1 so use the package version 3.2.1.
+    * JAR files is a compressed file containing Classes and other code for a specific function.
+      * When working with Postgres or AWS S3 or other specific things, you need to install the JAR for them.
+
+
+# API Types
+## DataFrames
+The Api that is most typically used.  Attempts to overcome the limitations of RDDs and provide a modern data structure.  Can read & write data from formats like CSV, JSON, AVRO, HDFS, and Hive.  Data is organized into named columns, aka relational data like in SQL or a dataframe in Pandas / R.
+
+Catalyst optimizer is used for optimization purposes.
+
+## RDD
+Outdated, don't use.  Fault tolerant data structure that can store partitioned data across multiple nodes in a cluster and allows parallel processing.
+
+## Dataset
+Not available in PySpark, only Java and Scala.  Brings benefits from both RDD and DataFrames.  Type-safety / strong typing, lambda functions and also the benefits of the Spark SQL execution engine.
+
+You can convert RDD and DataFrames to the other's type, and DataFrames & Datasets to RDDs.
+
+
+# How Spark Works
+[Pic Link](https://cdn.discordapp.com/attachments/272962334648041474/974674566179868732/unknown.png)
+[Spark Docs](https://www.dcc.fc.up.pt/~edrdo/aulas/bdcc/classes/spark_arch/bdcc_spark_arch.html)
+
+Spark processes everything in the JVM.  When you use something like PySpark you are basically just writing Python code that is wrapping the actual function calls that happen in Java/Scala.
+
+The entrypoint into Spark is the SparkSession call.  This starts the cluster manager and tells it that there's work that will need to be executed.  It sends your application code written in Python/Scala etc. to the executors as well as the tasks to them so they can be executed.
+
+The Cluster Manager
+    * Standalone - entire application runs on 1 machine
+    * YARN - resource manager in Hadoop 2
+    * Mesos - deprecated
+    * Kubernetes - runs things in containers
+  
+      * As far as I'm aware, this cluster manager can manage MULTIPLE Spark Applications and allocate resources to different Spark Projects that are connected to it.
+      * Different applications running on different SparkSession contexts run in their own JVM, and cannot share data unless communicating with an external storage system.
+      * Cluster will tell you how much RAM you're using and how much you have available, how many worker nodes, how many applications, and the RAM/CPU of each worker node.
+      * There is only one cluster manager (master node) per Cluster.
+  
+The Cluster Manager communicates with worker nodes that each have their own cache, CPU, and memory to complete tasks and store data.
+    * The type of cluster manager doesn't really matter, the underlying architecture should be relatively the same.
+
+The Driver Program is your local computer or remote server you're working on where your code sits and where you start the Spark entrypoint.  This directly launches your spark tasks on the worker nodes, which makes sense; when we call `collect().` on data we're doing that in the driver program and the worker node executes that task for us.
+    * Each application only have 1 Driver Program.
+
+Spark doesn't schedule any processing until you tell it to with calls like `.collect()`. or `.write()`, it will instead just store the instructions.
+
+Spark runs are called jobs, and jobs run in stages.  Stages for the same job can not run in parallel, you must wait for the previous stage to finish.
+    * Shuffle Operations are when you repartition your data across nodes, ideally evenly distributing it so you don't run into skew issues or nodes that have 90% of the data and others have 10% of the data.
+
+Like SQL, Spark programs have an execution plan that you can view to see what's going on under the hood.
+    * Logical execution plans are structured in terms of dataframe transformations and are independent of the cluster characteristics.
+    * Phyiscal execution plans are compiled from the logical plan and define the actual job stages and their component tasks, and may include cluster characteristics.
+
+Narrow transformations just map input data to 1 partition.  Wide Transformations may read from multiple different partitions, do some processing logic, and then store to many output partitions.  This requires the reshuffling of data across executors.
+
+In cluster mode, a spark Applicatino Driver and its executors all run inside the cluster in assocation with its workers.
+
+In client mode, the application driver runs in a machine outside of the cluster.  This is more flexible, better security reasons (user code may not be trustworthy) etc.
