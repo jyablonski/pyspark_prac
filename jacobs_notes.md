@@ -234,6 +234,26 @@ Not available in PySpark, only Java and Scala.  Brings benefits from both RDD an
 
 You can convert RDD and DataFrames to the other's type, and DataFrames & Datasets to RDDs.
 
+## Task
+Single operation applied to a single partition.  Each task is executed on a single thread in an executor.  2 Partitions will trigger 2 tasks.
+
+## Stage
+A sequence of tasks that can all be ran together, in parallel, withou a shuffle.
+
+## Job
+A sequence of stages, triggered by actions like `count()`, `collect()`, or `write()`.
+
+## Plans
+[Article](https://medium.com/the-code-shelf/spark-query-plans-for-dummies-6f3733bab146)
+Spark's optimization engine, the Catalyst optimizer, generates the Logical and physical plans.
+
+Logical plan verifies if the operation is correct, identifies data types, location of the data / columns, and validates the operation.
+
+A physical plan is then created where spark decides which algorithm to use for each operator.  Which join (SortMergeJoin or BroadcastHashJoin), is used.
+
+Finally the best physical plan is chosen.
+
+Data gets pulled in, filters are applied, only the necessary columns are carried through the task, shuffles/exchanges occur to move data around during joins, shuffles, and repartitions.
 
 # How Spark Works
 [Pic Link](https://cdn.discordapp.com/attachments/272962334648041474/974674566179868732/unknown.png)
@@ -256,14 +276,20 @@ The Cluster Manager
   
 The Cluster Manager communicates with worker nodes that each have their own cache, CPU, and memory to complete tasks and store data.
     * The type of cluster manager doesn't really matter, the underlying architecture should be relatively the same.
+    * Worker nodes host the executors responsible for the actual execution of tasks.
 
 The Driver Program is your local computer or remote server you're working on where your code sits and where you start the Spark entrypoint.  This directly launches your spark tasks on the worker nodes, which makes sense; when we call `collect().` on data we're doing that in the driver program and the worker node executes that task for us.
     * Each application only have 1 Driver Program.
+    * It coordinates the Spark program
+    * It contains the SparkContext object.
+    * It's responsible for scheduling the execution of data by worker nodes when in cluster mode.
+    * Should be close as possible to worker nodes for optimal performance.
 
 Spark doesn't schedule any processing until you tell it to with calls like `.collect()`. or `.write()`, it will instead just store the instructions.
 
 Spark runs are called jobs, and jobs run in stages.  Stages for the same job can not run in parallel, you must wait for the previous stage to finish.
     * Shuffle Operations are when you repartition your data across nodes, ideally evenly distributing it so you don't run into skew issues or nodes that have 90% of the data and others have 10% of the data.
+    * A Shuffle is the process by which data is compared across partitions.
 
 Like SQL, Spark programs have an execution plan that you can view to see what's going on under the hood.
     * Logical execution plans are structured in terms of dataframe transformations and are independent of the cluster characteristics.
@@ -271,6 +297,6 @@ Like SQL, Spark programs have an execution plan that you can view to see what's 
 
 Narrow transformations just map input data to 1 partition.  Wide Transformations may read from multiple different partitions, do some processing logic, and then store to many output partitions.  This requires the reshuffling of data across executors.
 
-In cluster mode, a spark Applicatino Driver and its executors all run inside the cluster in assocation with its workers.
+In cluster mode, a spark Application Driver and its executors all run inside the cluster in assocation with its workers.
 
 In client mode, the application driver runs in a machine outside of the cluster.  This is more flexible, better security reasons (user code may not be trustworthy) etc.
