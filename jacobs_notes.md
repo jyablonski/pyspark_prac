@@ -171,11 +171,13 @@ df.select(pandas_plus_one(df.a)).show()
 ```
 
 # History
-Hadoop came out in 2006 which enabled distributing computing: using multiple machines on 1 task by distributing work to them and then collecting and aggregating it together.  This framework to accomplish this task was called MapReduce and it was written in Java.  However, Hadoop was slow and had to write to disk and RAM was not efficiently being used.
+Hadoop came out in 2006 which enabled distributing computing: using multiple machines on 1 task by distributing work to them and then collecting and aggregating it together.  This framework to accomplish this task was called MapReduce and it was written in Java.  However, Hadoop was slow and had to write to disk and RAM was not efficiently being used.  Some specific software components like YARN were also built that everybody started using and wanted to keep as new tooling was built, hence a lot of big data frameworks are written in Java and use these components.  
+
+These frameworks sit on top of the JVM which is/was relatively easier to build these tools out of than C or C++ because memory management there is more difficult.  However, C++ is faster and some of these tools are rebuilt there for speed purposes.
 
 Facebook created Hive in 2010 to improve this by using a flavor of SQL called HQL to write MapReduce jobs in a SQL-like language.  However, it still kinda sucked.
 
-Spark was released in 2014 to address the above drawbacks.  It leverages as much RAM as possible which vastly increases compute time which is where the `50-100x faster` statistic comes from.
+Spark was released in 2014 to address the above drawbacks.  It's written in Scala and leverages as much RAM as possible which vastly increases compute time which is where the `50-100x faster` statistic comes from.
 
 # Troubleshooting
 If you're having OutOfMemory errors - make sure your nodes are utilizing as much RAM as possible and it isn't set to a default number.  A lot of these solutions literally just say "Increase the RAM" like yeet.
@@ -235,10 +237,10 @@ Not available in PySpark, only Java and Scala.  Brings benefits from both RDD an
 You can convert RDD and DataFrames to the other's type, and DataFrames & Datasets to RDDs.
 
 ## Task
-Single operation applied to a single partition.  Each task is executed on a single thread in an executor.  2 Partitions will trigger 2 tasks.
+Single operation applied to a single partition.  Each task is executed on a single thread in an executor.  2 Partitions will trigger 2 tasks.  An executor with 16 cores can have 16 tasks each working on their own partition in parallel.
 
 ## Stage
-A sequence of tasks that can all be ran together, in parallel, withou a shuffle.
+A sequence of tasks that can all be ran together, in parallel, without a shuffle.  Others might need to be ran sequentially.
 
 ## Job
 A sequence of stages, triggered by actions like `count()`, `collect()`, or `write()`.
