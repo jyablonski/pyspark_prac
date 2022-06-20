@@ -10,3 +10,4 @@ ENV PYSPARK_PYTHON=python3
 WORKDIR /app
 
 COPY test/ ./test/
+# this image is 503mb (compressed) in ECR

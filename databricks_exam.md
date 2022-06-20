@@ -79,7 +79,7 @@ Transformations are business logic operations that do not induce execution, acti
 
 Spark has 3 execution/deployment modes: cluster, client, and local.  They determine where the driver and executors are physically located when a Spark application is run.
 
-Each worker node has 1 executor in it.
+Each worker node has at least 1 executor in it.
 
 Spark cluster configurations will all ensure completion of a Spark application bc worker nodes are fault-tolerant, regardless of how many executors there are.
 
