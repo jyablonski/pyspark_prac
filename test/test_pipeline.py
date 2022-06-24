@@ -9,7 +9,7 @@ full_df_schema = 'StructType(List(StructField(owner,StringType,true),StructField
 # then make a new case when where you grab owner + grouped price and filter it based on > 10 so it's a boolean 1 or 0 and name it indicator
 # and then filter the df to only values where indicator == 1.
 
-#####
+# this function would probably be in the application's src/ folder, but putting it here for simplicity.
 def sample_transform_jacob(input_df: DataFrame) -> DataFrame:
     inter_df = input_df.where(input_df['color'] == F.lit('red')) \
         .groupBy('owner') \
@@ -43,3 +43,13 @@ def test_df_schema(df_dtype_fixture):
     # adding str here allows me to avoid having to import all of this StructType Field nonsense
     # basically just grab the schema once and then if it ever changes (unexpectedly) then this test will start failing.
     assert str(new_df.schema) == full_df_schema
+
+@pytest.mark.usefixtures("spark_session")
+def test_full_df_transform_distinct(full_df_fixture):
+    new_df = sample_transform_jacob(full_df_fixture)
+    new_df = new_df.withColumn("date", F.current_timestamp())
+    new_df = new_df.union(new_df)
+
+    assert new_df.count() == 2
+    assert new_df.select("date").count() == 2
+    assert new_df.select(F.countDistinct("date")).count() == 1
