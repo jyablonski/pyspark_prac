@@ -5,3 +5,15 @@ docker-build:
 .PHONY: docker-test
 docker-test:
 	@docker-compose -f docker/docker-compose.yml up
+
+.PHONY: install-venv
+install-venv:
+	@pipenv install --dev
+
+.PHONY: venv
+venv:
+	@pipenv shell
+
+.PHONY: test
+test:
+	@pytest -v

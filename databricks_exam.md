@@ -76,6 +76,9 @@ If there are more partitions than number of executors, then not all data can be 
 Transformations are business logic operations that do not induce execution, actions only trigger the atual execution to return the results.
 
 [Narrow Transformation](https://discord.com/channels/272962334648041474/272962334648041474/980524997833527376) - only `.select` because all the others involve pretty complex transformation steps.
+- ![image](https://user-images.githubusercontent.com/16946556/213941901-2749caeb-d39a-4311-bf09-1ed0e4fab35d.png)
+- Narrow Transformations are small transformations that require no shuffling and are using pretty fast, like `map()` and `filter().
+- Wide Transformations are slower, typically involves shuffles like `groupBy()` and `join()`.
 
 Spark has 3 execution/deployment modes: cluster, client, and local.  They determine where the driver and executors are physically located when a Spark application is run.
 

@@ -3,7 +3,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 from pyspark.sql.types import IntegerType
 
-full_df_schema = 'StructType(List(StructField(owner,StringType,true),StructField(price,IntegerType,true)))'
+full_df_schema = "StructType(List(StructField(owner,StringType,true),StructField(price,IntegerType,true)))"
 
 # take a data frame, filter by color == 'red', group by owner, create a new col called 'grouped_price' which aggregates that.
 # then make a new case when where you grab owner + grouped price and filter it based on > 10 so it's a boolean 1 or 0 and name it indicator
