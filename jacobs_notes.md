@@ -302,3 +302,80 @@ Narrow transformations just map input data to 1 partition.  Wide Transformations
 In cluster mode, a spark Application Driver and its executors all run inside the cluster in assocation with its workers.
 
 In client mode, the application driver runs in a machine outside of the cluster.  This is more flexible, better security reasons (user code may not be trustworthy) etc.
+
+# Spark Components
+[Video](https://www.youtube.com/watch?v=_ArCesElWp8) - left off at 33:00
+
+1) Spark Context
+   - Entrypoint into Spark.  It establishes a connection to the Spark Execution environment.  Provides access to the Spark Cluster.
+2) Cluster Manager
+3) Driver Program
+4) Worker Node (also called slaves or slave nodes).
+   - Where Jobs are executed.
+   1) Executor - The process responsible for executing a task that was scheduled by the Driver Program.
+   2) Memory - Memory gets split so if you have 32GB that doesn't mean you have 32GB for your job.
+      1) Cache
+      2) Working Memory
+   3) CPU Cores / Slots
+      1) Each of these can take 1 piece of work
+      2) Ideally you want to have at least 70% CPU Utilization for your workloads to get the most value out of your $$$.
+   4) Task (A)
+   5) Task (B)
+5) Job
+   - Can be described as an entire script.  Code that takes an input dataset, does some operations, and outputs it someplace else.
+   - Consists of multiple Stages.
+6) Stage
+   - A Stage is comprised of 1 or more tasks.
+   - A Job can have multiple Stages.
+7) Tasks
+   - Go inside of a stage.
+   - If you have more than 1 of the same task, each of those tasks will do the same exact thing just on a different part of the data.
+   - A Task uses 1 CPU Core / Slot to operate on 1 partition of your data.
+   - Tasks are the only thing interacting with your hardware.  Everything else is for organization and structure of the process.
+8) RDD
+   - Fault tolerant collection of elements that can be operated on in parallel.
+   - Transformations - Create a new Dataset from an existing one.
+     - Narrow - Doesn't require reshuffling of data (like `filter`).
+     - Wide - Requires data to be shuffled (like `groupby` or `join`).
+   - Actions - Trigger job execution & saves a file or returns a value to the driver program after running a computation on the dataset.
+   - Spark is lazy evaluated, so if you write a bunch of code and execute it nothing will happen unless you tell it to actually save or output something.
+   - Shuffle - Moving data around between all available machines for a workload.  In the intermediate steps, this data is stored on disk.  Faster the disk, the faster the shuffle.
+9)  DAG
+    - The Catalyst optimizer looks at the code and figures out the most efficient way to reach the desired endpoint, and creates the DAG.
+    - An optimized collection of all stages & tasks needed to complete a Job.
+    - Directed Acyclic graph which tells you how to go from point A to point C.
+10) Partition
+    - Splitting your data into portions that can be individually loaded into memory or storage.
+    1. Input - Read data in.
+      - Spark defaults to 128MB partitions.
+    2. Shuffle - Do stuff to it.
+      - The default for a shuffle is 200 & is changed by the count, `SparkSQLShufflePartitions`.
+      - shuffle partition count - the number of partitions in your dataset.
+      - shuffle partition size - the size (in mbs) of each partition.
+      - `Shuffle partition count = stage input data / target size`
+        - target size should be less than 200 mbs.
+      - Example: Shuffle Stage = 210 GB.  210 GB / 200 mb default is 1050 shuffle partitions.  Even if you had 1000 cores, this is still not efficient because you still need 50 partitions to process.
+      - You don't want to see shuffle spill to disk.  If you see this then you got it wrong and you should be adding more partitions.
+    3. Output - Write it out somewhere.
+      - The easiest to control because you can see if the files are writing and how fast it is.
+
+
+# Spark UI
+![image](https://user-images.githubusercontent.com/16946556/222971753-b3c30af7-a675-447e-b6df-82284865a053.png)
+- 452 partitions of data to be operated on, 96 of which can run at the same time.
+
+![image](https://user-images.githubusercontent.com/16946556/222972069-24074aa7-bd25-4876-a015-6354a1fa64c9.png)
+- this is how you can detect skew.
+
+Executor tab will show server level statistics so you can identify if a server is failing all tasks and needs to be replaced.
+
+SQL tab shows all query plans for everything and the DAG for the job.
+
+Minimizing Data Scans
+- Hive Partitions - split larger table into smaller parts based on one or multiple columns.  
+  - Users still access the data by querying the original table.
+  - Allows faster access to the data and provides ability to perform an operation on a smaller dataset.
+- Bucketing - difficult use case unless you know exactly what dataset you have.  
+  - Harder to maintain.
+- Databricks Delta Z-Ordering - technique used to colocate related information in same set of files, and is automatically used by delta lake in data-skipping algorithms
+  - Dramatically reduces amount of data that delta lake on apache spark needs to read.

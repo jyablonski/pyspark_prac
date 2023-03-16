@@ -1,10 +1,25 @@
-FROM python:3.8-slim-buster AS py3
-FROM openjdk:8-slim-buster
+FROM python:3.9-slim as base
 
-COPY --from=py3 / /
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
 
-RUN pip --no-cache-dir install pyspark==3.2.1
-RUN pip --no-cache-dir install cython==0.29.28 numpy==1.22.2 pytest==7.0.1 pandas==1.4.1
+FROM base AS python-deps
+
+RUN apt-get update && apt-get -y upgrade && apt-get -y install --no-install-recommends gcc
+RUN pip install --upgrade pip && pip install pipenv
+
+COPY Pipfile /
+COPY Pipfile.lock /
+RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --dev
+
+FROM openjdk:17-slim-buster as runtime
+# FROM base AS runtime
+
+COPY --from=base / /
+COPY --from=python-deps /.venv /.venv
+ENV PATH="/.venv/bin:$PATH"
 ENV PYSPARK_PYTHON=python3
 
 WORKDIR /app
