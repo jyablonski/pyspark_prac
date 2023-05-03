@@ -323,12 +323,12 @@ In client mode, the application driver runs in a machine outside of the cluster.
    5) Task (B)
 5) Job
    - Can be described as an entire script.  Code that takes an input dataset, does some operations, and outputs it someplace else.
-   - Consists of multiple Stages.
+   - Consists of 1 or more Stages.
 6) Stage
-   - A Stage is comprised of 1 or more tasks.
-   - A Job can have multiple Stages.
+   - Sequence of tasks that can be ran together, in parallel, with no shuffles.
+   - Consists of 1 or more Tasks.
 7) Tasks
-   - Go inside of a stage.
+   - Single unit of operation applied to a single partition, executed in a single thread in an Executor.
    - If you have more than 1 of the same task, each of those tasks will do the same exact thing just on a different part of the data.
    - A Task uses 1 CPU Core / Slot to operate on 1 partition of your data.
    - Tasks are the only thing interacting with your hardware.  Everything else is for organization and structure of the process.
@@ -379,3 +379,7 @@ Minimizing Data Scans
   - Harder to maintain.
 - Databricks Delta Z-Ordering - technique used to colocate related information in same set of files, and is automatically used by delta lake in data-skipping algorithms
   - Dramatically reduces amount of data that delta lake on apache spark needs to read.
+
+
+# Spark UI
+[Link](http://localhost:4040/jobs/)
