@@ -1,54 +1,83 @@
+import time
 import os
 
-from pyspark import SparkConf
 from pyspark.sql import SparkSession
 
-# https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-iceberg-use-spark-cluster.html
-# spark 3.2, 
-conf = SparkConf()
-conf.set('spark.jars.packages', 'org.apache.hadoop:hadoop-aws:3.3.1') # basically most recent version as my spark version
-conf.set('spark.jars.packages', 'org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.1.0')
-conf.set('spark.hadoop.fs.s3a.aws.credentials.provider', 'org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider')
-conf.set('spark.hadoop.fs.s3a.access.key', os.environ.get('aws_access_key_id'))
-conf.set('spark.hadoop.fs.s3a.secret.key', os.environ.get('aws_secret_access_key'))
-conf.set("spark.jars.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-conf.set('spark.sql.extensions', 'org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions')
-conf.set('spark.sql.catalog.spark_catalog', 'org.apache.iceberg.spark.SparkSessionCatalog')
-conf.set('spark.sql.catalog.spark_catalog.type', 'hadoop')
-conf.set("spark.sql.catalog.spark_catalog.warehouse", "s3a://jyablonski-iceberg/iceberg_test")
-conf.set("spark.sql.catalog.spark_catalog.io-impl", "org.apache.iceberg.aws.s3.S3FileIO" )
-# conf.set('spark.sql.defaultCatalog', 'local')
-# building it via a config rather than a raw .appName()
-spark = SparkSession.builder.config(conf=conf).getOrCreate()
-print(os.environ.get('aws_access_key_id'))
 
-data = spark.createDataFrame([
- ("100", "2015-01-01", "2015-01-01T13:51:39.340396Z"),
- ("101", "2015-01-01", "2015-01-01T12:14:58.597216Z"),
- ("102", "2015-01-01", "2015-01-01T13:51:40.417052Z"),
- ("103", "2015-01-01", "2015-01-01T13:51:40.519832Z")
-],["id", "creation_date", "last_update_time"])
+# https://github.com/apache/iceberg/issues/3829
+# no clue which one of these were / werent needed but wtf ever
+spark_packages = [
+    "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.1.0",
+    "software.amazon.awssdk:bundle:2.20.18",
+    "software.amazon.awssdk:url-connection-client:2.20.18",
+    "org.apache.hadoop:hadoop-aws:3.3.2",
+]
 
-# STEP 3 Write it back to S3
-# df5.write.mode("overwrite").format("csv").save(s3_dest_path)
-data.coalesce(1).write.parquet('s3a://jacobsbucket97-dev/pyspark/test.parquet')
+catalog_name = "iceberg_dev"
 
-df = spark.read.parquet('s3a://jyablonski-iceberg/reddit_comment_data-2023-03-06.parquet', inferSchema = True, header = True)
+# ngl, holy fuck java sucks complete balls jesus fkn christ man
 
-## Write a DataFrame as a Iceberg dataset to the Amazon S3 location.
-spark.sql("""CREATE TABLE IF NOT EXISTS spark_catalog.iceberg_test.iceberg_table (id string,
-creation_date string,
-last_update_time string)
-USING iceberg""")
-          
-# spark.sql("""CREATE TABLE IF NOT EXISTS dev.db.iceberg_table (id string,
-# creation_date string,
-# last_update_time string)
-# USING iceberg
-# location 's3://jyablonski-iceberg/iceberg_table'""")
+# this is used for ACID transactions to lock the table from being changed while an insert update or delete is in progress.
+# .config(f'spark.sql.catalog.{catalog_name}.lock-impl', 'org.apache.iceberg.aws.glue.DynamoLockManager') \
+# .config(f'spark.sql.catalog.{catalog_name}.lock.table', f'{catalog_name}') \
+# .config(f'spark.sql.catalog.{catalog_name}.type', 'hadoop') \
+spark = (
+    SparkSession.builder.config("spark.jars.packages", ",".join(spark_packages))
+    .config(
+        "spark.sql.extensions",
+        "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+    )
+    .config(
+        "spark.hadoop.fs.s3a.aws.credentials.provider",
+        "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider",
+    )
+    .config("spark.hadoop.fs.s3a.access.key", os.environ.get("aws_access_key_id"))
+    .config("spark.hadoop.fs.s3a.secret.key", os.environ.get("aws_secret_access_key"))
+    .config(
+        f"spark.sql.catalog.{catalog_name}", "org.apache.iceberg.spark.SparkCatalog"
+    )
+    .config(
+        f"spark.sql.catalog.{catalog_name}.warehouse",
+        f"s3a://jyablonski-iceberg/{catalog_name}",
+    )
+    .config(f"spark.sql.catalog.{catalog_name}.type", "hadoop")
+    .config(f"spark.sql.defaultCatalog", catalog_name)
+    .getOrCreate()
+)
 
-data.writeTo("dev.jyablonski_db.iceberg_table").append()
+table_name = "product.testtable"
+table_id = f"{catalog_name}.{table_name}"
+spark.sql(f"DROP TABLE IF EXISTS {table_id}")
+spark.sql(f"CREATE TABLE {table_id} (id bigint NOT NULL, data string) USING iceberg")
 
+spark.sql(f"INSERT INTO TABLE {table_id} VALUES (1, 'a')")
+time.sleep(3)
+spark.sql(f"INSERT INTO TABLE {table_id} VALUES (2, 'b')")
 
-df = spark.read.format("iceberg").load("dev.jyablonski_db.iceberg_table")
-df.show()
+expiretime = str(
+    spark.sql(f"SELECT * FROM {table_id}.snapshots").tail(1)[0]["committed_at"]
+)
+spark.sql(
+    f"CALL {catalog_name}.system.expire_snapshots('{table_name}', TIMESTAMP '{expiretime}')"
+).show()
+
+# read the whole iceberg table
+df_iceburger = spark.read.format("iceberg").load(f"{table_id}").toPandas()
+
+df_iceburger_history = (
+    spark.read.format("iceberg").load(f"{table_id}.history").collect()
+)
+df_iceburger_snapshots = (
+    spark.read.format("iceberg").load(f"{table_id}.snapshots").collect()
+)
+df_iceburger_files = spark.read.format("iceberg").load(f"{table_id}.files").collect()
+
+# i never got this working - dont think you're supposed to query this way.  use the above ^
+df_iceburger2 = spark.read.format("iceberg").load(
+    f"s3a://jyablonski-iceberg/{catalog_name}/{table_id}"
+)
+
+# read a hardcoded parquet file in s3
+df3 = spark.read.parquet(
+    "s3a://jyablonski-iceberg/iceberg_dev/product/testtable/data/00000-614-b30da3bf-2b87-4eea-9147-b690f6b6f667-00001.parquet"
+).toPandas()

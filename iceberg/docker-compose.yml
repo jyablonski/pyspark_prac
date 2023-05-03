@@ -1,5 +1,6 @@
 version: "3"
 
+# doing this shit locally with minio seems completely pointless.  use s3
 services:
   spark-iceberg:
     image: tabulario/spark-iceberg

@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-pyspark = "==3.3.1"
+pyspark = {extras = ["pandas_on_spark"], version = "*"}
 pandas = "*"
 pyarrow = "*"
 boto3 = "*"
