@@ -10,6 +10,7 @@ pyarrow = "*"
 boto3 = "*"
 delta-spark = "*"
 cython = "*"
+requests = "*"
 
 [dev-packages]
 ipykernel = "*"
