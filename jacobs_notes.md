@@ -383,3 +383,8 @@ Minimizing Data Scans
 
 # Spark UI
 [Link](http://localhost:4040/jobs/)
+
+## Example Projects
+[Project 1](https://github.com/AlexIoannides/pyspark-example-project)
+
+`docker run -it <image_name> bash`

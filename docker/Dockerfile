@@ -1,23 +1,33 @@
-FROM python:3.9-slim-buster AS py3
-FROM openjdk:17-slim-buster
+FROM python:3.11-slim AS base
 
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONFAULTHANDLER 1
+ENV POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_NO_INTERACTION=1
 
-COPY --from=py3 / /
-COPY Pipfile /
-COPY Pipfile.lock /
+FROM base AS python-deps
 
-RUN pip install pipenv
-RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --dev
+COPY pyproject.toml poetry.lock ./
 
+RUN pip install poetry
+RUN poetry install
+
+FROM base AS runtime
+
+COPY --from=python-deps ./.venv /.venv
 ENV PATH="/.venv/bin:$PATH"
-ENV PYSPARK_PYTHON=python3
 
-WORKDIR /app
+# this can prolly be multi staged but fuqqit and fuck java too while we at it
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+            openjdk-17-jre-headless \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
-COPY test/ ./test/
+RUN useradd --create-home appuser
+WORKDIR /home/appuser
+USER appuser
 
-# multi stage build wasn't workin & pissing me tf off so this is good enough for now
+COPY ./test ./test
+
+# CMD ["python3", "-m", "pytest", "-v"]

@@ -9,6 +9,7 @@ full_df_schema = "StructType([StructField('owner', StringType(), True), StructFi
 # then make a new case when where you grab owner + grouped price and filter it based on > 10 so it's a boolean 1 or 0 and name it indicator
 # and then filter the df to only values where indicator == 1.
 
+
 # this function would probably be in the application's src/ folder, but putting it here for simplicity.
 def sample_transform_jacob(input_df: DataFrame) -> DataFrame:
     inter_df = (
