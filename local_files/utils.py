@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession
 
-
 def setup_spark_app(app_name: str, spark_packages=None | list[str], local=True):
     """
     Set up a PySpark application.
