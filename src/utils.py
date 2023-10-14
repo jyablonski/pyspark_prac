@@ -1,12 +1,13 @@
 from pyspark.sql import SparkSession
 
+
 # spark.sparkContext._conf.getAll()
 def setup_spark_app(
     app_name: str,
     spark_packages: list[str] | None = None,
     spark_config: dict | None = None,
     spark_host: str | None = None,
-):
+) -> SparkSession:
     """
     Set up a PySpark application.
 
@@ -15,7 +16,7 @@ def setup_spark_app(
 
         spark_packages (None | str): Optional list of Spark packages to include.
 
-        spark_config (None | dict): Optional Parameter to specify Config Options
+        spark_config (None | dict): Optional dictionary to specify Config Options
 
         spark_host (None | str): Optional Parameter to specify the Spark Host if
             connecting to a Remote Cluster.  If not specified then a local Spark
@@ -37,7 +38,6 @@ def setup_spark_app(
     if spark_config:
         for config, config_value in spark_config.items():
             spark_builder.config(config, config_value)
-
 
     if spark_host:
         print(f"Building SparkSession to Remote Spark Cluster at spark://{spark_host}")

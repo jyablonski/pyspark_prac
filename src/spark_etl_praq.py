@@ -27,12 +27,12 @@ spark = setup_spark_app(
 )
 
 
-
 api = "https://api.jyablonski.dev/injuries"
 response = requests.get(api)
 
-df = spark.createDataFrame(response.json()) \
-    .withColumn("scrape_timestamp", F.current_timestamp())
+df = spark.createDataFrame(response.json()).withColumn(
+    "scrape_timestamp", F.current_timestamp()
+)
 
 
 df.coalesce(1).write.parquet(f"{s3_bucket}/parquet")
