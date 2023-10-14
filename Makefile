@@ -17,3 +17,11 @@ venv:
 .PHONY: test
 test:
 	@pytest -v
+
+.PHONY: start-postgres
+start-postgres:
+	@docker compose -f docker/docker-compose-postgres.yml up --build -d
+
+.PHONY: stop-postgres
+stop-postgres:
+	@docker compose -f docker/docker-compose-postgres.yml down

@@ -55,4 +55,12 @@ df = (
 df.show()
 
 df2 = df.collect()
+
+date = datetime.now().date()
+df.coalesce(1).write.parquet(f"boxscores-{date}.parquet")
+df.coalesce(1).write.format("parquet").save(f"boxscores-v2-{date}.parquet")
+
+df2 = spark.read.parquet(f"boxscores-v2-{date}.parquet")
+
+d = df2.count()
 spark.stop()
