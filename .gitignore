@@ -4,3 +4,4 @@
 .env
 **/__pycache__/
 **/aws_credentials
+trino/etc/catalog/iceberg.properties
