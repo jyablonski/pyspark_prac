@@ -51,3 +51,25 @@ def setup_spark_app(
 
     spark = spark_builder.getOrCreate()
     return spark
+
+
+def move_to_iceberg(
+    spark: SparkSession,
+    s3_source_data: str,
+    iceberg_schema: str,
+    iceberg_table: str,
+    table_partition_col: str,
+) -> None:
+    print(f"Recursively Loading Data from {s3_source_data}")
+    df = spark.read.parquet(s3_source_data)
+
+    df = df.orderBy(table_partition_col)
+    df.createOrReplaceTempView(iceberg_table)
+
+    print(f"Creating Table {iceberg_schema}.{iceberg_table}")
+    spark.sql(
+        f"""
+        create table {iceberg_schema}.{iceberg_schema}.{iceberg_table} using iceberg as
+        select * from {iceberg_table};"""
+    )
+    pass

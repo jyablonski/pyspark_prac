@@ -5,7 +5,7 @@ import os
 
 # https://github.com/apache/iceberg/issues/3829
 spark_packages = [
-    "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.1.0",
+    "org.apache.iceberg:iceberg-spark-runtime-3.4_2.12:1.4.2",
     "software.amazon.awssdk:bundle:2.20.18",
     "software.amazon.awssdk:url-connection-client:2.20.18",
     "org.apache.hadoop:hadoop-aws:3.3.2",
@@ -66,11 +66,11 @@ data = spark.createDataFrame(
 # STEP 3 Write it back to S3
 # df5.write.mode("overwrite").format("csv").save(s3_dest_path)
 data.coalesce(1).write.mode("overwrite").parquet(
-    "s3a://jyablonski-iceberg/pyspark/test.parquet"
+    "s3a://jyablonski2-iceberg/pyspark/test.parquet"
 )
 
 df = spark.read.parquet(
-    "s3a://jyablonski-iceberg/reddit_comment_data-2023-03-06.parquet",
+    "s3a://jyablonski-nba-elt-prod/adv_stats/validated/year=2023/month=11/adv_stats-2023-11-02.parquet",
     inferSchema=True,
     header=True,
 )

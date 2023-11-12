@@ -2,12 +2,13 @@ import time
 import os
 
 from pyspark.sql import SparkSession
+from src.utils import move_to_iceberg
 
 
 # https://github.com/apache/iceberg/issues/3829
 # no clue which one of these were / werent needed but wtf ever
 spark_packages = [
-    "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.1.0",
+    "org.apache.iceberg:iceberg-spark-runtime-3.4_2.12:1.4.2",
     "software.amazon.awssdk:bundle:2.20.18",
     "software.amazon.awssdk:url-connection-client:2.20.18",
     "org.apache.hadoop:hadoop-aws:3.3.2",
@@ -38,7 +39,7 @@ spark = (
     )
     .config(
         f"spark.sql.catalog.{catalog_name}.warehouse",
-        f"s3a://jyablonski-iceberg/{catalog_name}",
+        f"s3a://jyablonski2-iceberg/{catalog_name}",
     )
     .config(f"spark.sql.catalog.{catalog_name}.type", "hadoop")
     .config(f"spark.sql.defaultCatalog", catalog_name)
@@ -74,10 +75,21 @@ df_iceburger_files = spark.read.format("iceberg").load(f"{table_id}.files").coll
 
 # i never got this working - dont think you're supposed to query this way.  use the above ^
 df_iceburger2 = spark.read.format("iceberg").load(
-    f"s3a://jyablonski-iceberg/{catalog_name}/{table_id}"
+    f"s3a://jyablonski2-iceberg/{catalog_name}/{table_id}"
 )
+
+df_sql = spark.sql(f"select * from {table_id} where id < 2;").show()
 
 # read a hardcoded parquet file in s3
 df3 = spark.read.parquet(
-    "s3a://jyablonski-iceberg/iceberg_dev/product/testtable/data/00000-614-b30da3bf-2b87-4eea-9147-b690f6b6f667-00001.parquet"
+    "s3a://jyablonski2-iceberg/iceberg_dev/product/testtable/data/00000-614-b30da3bf-2b87-4eea-9147-b690f6b6f667-00001.parquet"
 ).toPandas()
+
+
+move_to_iceberg(
+    spark=spark,
+    s3_source_data="s3a://jyablonski-nba-elt-prod/pbp_data/",
+    iceberg_schema="nba_data",
+    iceberg_table="pbp_data",
+    table_partition_col="scrape_date",
+)
