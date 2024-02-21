@@ -6,13 +6,9 @@ docker-build:
 docker-test:
 	@docker-compose -f docker/docker-compose.yml up
 
-.PHONY: install-venv
-install-venv:
-	@pipenv install --dev
-
 .PHONY: venv
 venv:
-	@pipenv shell
+	@poetry shell
 
 .PHONY: test
 test:
@@ -32,8 +28,17 @@ streaming-build:
 
 .PHONY: streaming-up
 streaming-up:
-	@docker compose -f streaming/docker-compose.yml up
+	@docker compose -f streaming/docker-compose.yml up -d
 
 .PHONY: streaming-down
 streaming-down:
 	@docker compose -f streaming/docker-compose.yml down
+
+
+.PHONY: trino-up
+trino-up:
+	@docker compose -f trino/docker-compose.yml up -d
+
+.PHONY: trino-down
+trino-down:
+	@docker compose -f trino/docker-compose.yml down
