@@ -10,7 +10,7 @@ from pyspark.sql.types import (
 
 from pyspark.sql.functions import from_json, col
 
-TOPIC_NAME="jacobs-topic"
+TOPIC_NAME = "jacobs-topic"
 
 jacobs_topic_schema = StructType(
     [
