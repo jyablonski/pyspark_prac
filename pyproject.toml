@@ -12,6 +12,8 @@ boto3 = ">=1.28.53"
 requests = ">=2.31.0"
 delta-spark = ">=2.4.0"
 pandas = "2.1.0"
+faker = "^23.2.1"
+confluent-kafka = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.25.2"
