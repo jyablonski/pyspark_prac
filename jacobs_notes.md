@@ -388,3 +388,14 @@ Minimizing Data Scans
 [Project 1](https://github.com/AlexIoannides/pyspark-example-project)
 
 `docker run -it <image_name> bash`
+
+
+## 
+[Video](https://www.youtube.com/watch?v=HqZstqwWq5E&t=2s)
+
+JVM-based Spark Engine was becoming CPU bound, Spark Core Engineers found it difficult to optimize the Spark SQL execution engine further.
+
+Photon is a single-threaded C++ Execution Engine embedded into the Databricks Runtime.  It overrides the existing engine when appropriate.
+- Supports both Spark's SQL Engine and the Dataframe API
+- Slides in to seamlessly replace expensive java operations for performance
+- Costs more to use on Databricks than native Spark
