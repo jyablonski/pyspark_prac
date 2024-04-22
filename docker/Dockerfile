@@ -28,6 +28,7 @@ RUN useradd --create-home appuser
 WORKDIR /home/appuser
 USER appuser
 
-COPY ./test ./test
+COPY ./src ./src
+COPY ./tests ./tests
 
 # CMD ["python3", "-m", "pytest", "-v"]

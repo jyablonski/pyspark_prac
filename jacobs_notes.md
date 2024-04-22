@@ -399,3 +399,4 @@ Photon is a single-threaded C++ Execution Engine embedded into the Databricks Ru
 - Supports both Spark's SQL Engine and the Dataframe API
 - Slides in to seamlessly replace expensive java operations for performance
 - Costs more to use on Databricks than native Spark
+- The interesting part here is it uses precompiled primitives and it integrates with the existing JVM-based runtime
