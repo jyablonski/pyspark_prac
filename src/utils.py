@@ -1,4 +1,5 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col, concat_ws, current_timestamp, md5
 
 
 # spark.sparkContext._conf.getAll()
@@ -73,3 +74,30 @@ def move_to_iceberg(
         select * from {iceberg_table};"""
     )
     pass
+
+
+def setup_metadata_cols(df: DataFrame, primary_key_cols: list[str]) -> DataFrame:
+    """
+    Function to add Hash + Timestamp Columns onto an existing DataFrame
+
+    Args:
+        df (DataFrame): PySpark DataFrame Object to modify
+
+        primary_key_cols (list[str]): List of columns to use as primary key.
+            Can be 1 or more columns
+
+    Returns:
+        DataFrame: PySpark DataFrame with new columns added
+
+    Example:
+        >>> df2 = setup_metadata_cols(df=df, primary_key_cols=["id"])
+    """
+    # turn string into list of strings if that's what was passed in
+    if isinstance(primary_key_cols, str):
+        primary_key_cols = [primary_key_cols]
+
+    new_df = df.withColumn("hash", concat_ws("", *primary_key_cols)).withColumn(
+        "created_at", current_timestamp()
+    )
+
+    return new_df
