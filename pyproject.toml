@@ -23,17 +23,9 @@ black = "^23.9.1"
 notebook = "^7.0.4"
 
 [tool.pytest.ini_options]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::UserWarning",
-    'ignore:function ham\(\) is deprecated:DeprecationWarning',
-]
 testpaths = ["tests"]
-markers = [
-    "wip: work in progress",
-    "infrastructure: mocks for dummy data (sql db, http endpoint etc)",
-]
-addopts = "-v"
+addopts = "-v -p no:warnings"
+# verbose mode, and dont show any warnings in test output
 
 [build-system]
 requires = ["poetry-core"]
