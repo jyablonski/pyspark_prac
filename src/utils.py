@@ -101,3 +101,22 @@ def setup_metadata_cols(df: DataFrame, primary_key_cols: list[str]) -> DataFrame
     )
 
     return new_df
+
+
+def get_spark_config(spark: SparkSession) -> list[tuple[str, str]]:
+    """
+    Small Helper Function to print Spark Config Parameters set on the
+    provided Spark Session Object because it's a mfer to remember what
+    the command is every time.
+
+    Args:
+        spark (SparkSession): Spark Session Object
+
+    Returns:
+        list[tuple[str, str]]: List of Tuples with Config Parameters
+
+    """
+    config = spark.sparkContext.getConf().getAll()
+    print(config)
+
+    return config

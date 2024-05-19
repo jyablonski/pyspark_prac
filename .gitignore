@@ -5,3 +5,4 @@
 **/__pycache__/
 **/aws_credentials
 trino/etc/catalog/iceberg.properties
+data/

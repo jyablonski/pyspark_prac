@@ -359,12 +359,14 @@ In client mode, the application driver runs in a machine outside of the cluster.
     3. Output - Write it out somewhere.
       - The easiest to control because you can see if the files are writing and how fast it is.
 
-
 # Spark UI
+
 ![image](https://user-images.githubusercontent.com/16946556/222971753-b3c30af7-a675-447e-b6df-82284865a053.png)
+
 - 452 partitions of data to be operated on, 96 of which can run at the same time.
 
 ![image](https://user-images.githubusercontent.com/16946556/222972069-24074aa7-bd25-4876-a015-6354a1fa64c9.png)
+
 - this is how you can detect skew.
 
 Executor tab will show server level statistics so you can identify if a server is failing all tasks and needs to be replaced.
@@ -372,6 +374,7 @@ Executor tab will show server level statistics so you can identify if a server i
 SQL tab shows all query plans for everything and the DAG for the job.
 
 Minimizing Data Scans
+
 - Hive Partitions - split larger table into smaller parts based on one or multiple columns.  
   - Users still access the data by querying the original table.
   - Allows faster access to the data and provides ability to perform an operation on a smaller dataset.
@@ -382,21 +385,47 @@ Minimizing Data Scans
 
 
 # Spark UI
+
 [Link](http://localhost:4040/jobs/)
 
 ## Example Projects
+
 [Project 1](https://github.com/AlexIoannides/pyspark-example-project)
 
 `docker run -it <image_name> bash`
 
 
 ## 
+
 [Video](https://www.youtube.com/watch?v=HqZstqwWq5E&t=2s)
 
 JVM-based Spark Engine was becoming CPU bound, Spark Core Engineers found it difficult to optimize the Spark SQL execution engine further.
 
 Photon is a single-threaded C++ Execution Engine embedded into the Databricks Runtime.  It overrides the existing engine when appropriate.
+
 - Supports both Spark's SQL Engine and the Dataframe API
 - Slides in to seamlessly replace expensive java operations for performance
 - Costs more to use on Databricks than native Spark
 - The interesting part here is it uses precompiled primitives and it integrates with the existing JVM-based runtime
+
+## Performance Tuning
+
+[Spark Docs](https://spark.apache.org/docs/latest/sql-performance-tuning.html)
+
+![image](https://github.com/jyablonski/pyspark_prac/assets/16946556/fe1cf0a0-fda6-47d7-b1fd-33a4c63b8e33)
+
+![image](https://github.com/jyablonski/pyspark_prac/assets/16946556/d1e041ab-0e1a-46f4-850c-1da45be05021)
+
+- This task is processing more records than the others - red flag for data skew
+
+Adaptive Query Execution (AQE) is an optimization technique in Spark SQL that makes use of the runtime statistics to choose the most efficient query execution plan, which is enabled by default since Apache Spark 3.2.0. Spark SQL can turn on and off AQE by spark.sql.adaptive.enabled as an umbrella configuration. As of Spark 3.0, there are three major features in AQE: including coalescing post-shuffle partitions, converting sort-merge join to broadcast join, and skew join optimization
+
+Data skew can severely downgrade the performance of join queries. This feature dynamically handles skew in sort-merge join by splitting (and replicating if needed) skewed tasks into roughly evenly sized tasks. It takes effect when both spark.sql.adaptive.enabled and spark.sql.adaptive.skewJoin.enabled configurations are enabled.
+
+- `spark.sql.adaptive.skewJoin.enabled`
+- `spark.sql.adaptive.skewJoin.skewedPartitionFactor`
+- `spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes`
+
+How to deal with data skew:
+- Use a derived column to split the data
+
