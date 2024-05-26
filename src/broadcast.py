@@ -24,5 +24,7 @@ result = sales_df.join(
     broadcast(products_df), sales_df["product_id"] == products_df["product_id"]
 )
 
+result = sales_df.join(products_df, sales_df["product_id"] == products_df["product_id"])
+
 # Show result
 result.show()
