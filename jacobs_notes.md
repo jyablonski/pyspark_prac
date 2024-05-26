@@ -418,7 +418,12 @@ Photon is a single-threaded C++ Execution Engine embedded into the Databricks Ru
 
 - This task is processing more records than the others - red flag for data skew
 
-Adaptive Query Execution (AQE) is an optimization technique in Spark SQL that makes use of the runtime statistics to choose the most efficient query execution plan, which is enabled by default since Apache Spark 3.2.0. Spark SQL can turn on and off AQE by spark.sql.adaptive.enabled as an umbrella configuration. As of Spark 3.0, there are three major features in AQE: including coalescing post-shuffle partitions, converting sort-merge join to broadcast join, and skew join optimization
+Adaptive Query Execution (AQE) is an optimization technique in Spark SQL that makes use of the runtime statistics to choose the most efficient query execution plan, which is enabled by default since Apache Spark 3.2.0. Spark SQL can turn on and off AQE by spark.sql.adaptive.enabled as an umbrella configuration. As of Spark 3.0, there are three major features in AQE: including coalescing post-shuffle partitions, converting sort-merge join to broadcast join, and skew join optimiza
+tion.  It enables:
+
+- Dynamically changes sort merge join into broadacast hash join
+- Dynamically combines small partitions into reasonably sized ones after shuffle exchange because very small tasks have a lot of overhead.
+- Dynamically handles skew in sort merge and shuffle hash joins by splitting skewed tasks into roughly even sized tasks
 
 Data skew can severely downgrade the performance of join queries. This feature dynamically handles skew in sort-merge join by splitting (and replicating if needed) skewed tasks into roughly evenly sized tasks. It takes effect when both spark.sql.adaptive.enabled and spark.sql.adaptive.skewJoin.enabled configurations are enabled.
 
@@ -427,5 +432,24 @@ Data skew can severely downgrade the performance of join queries. This feature d
 - `spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes`
 
 How to deal with data skew:
-- Use a derived column to split the data
 
+- Use a derived column to split the data (aka createa a new one w/ salted values of the original column you want to group by so that you end up with an even distribution)
+
+
+## Spark Files
+
+When writing data to HDFS or other similar distributed file systems, two special types of files you might encounter are `.crc` files and `.success` files. Here is what they are and their purposes:
+
+### .crc Files
+
+1. **Cyclic Redundancy Check (CRC) Files**:
+   - **Purpose**: CRC files are used for error-checking. They store checksum information for files written to HDFS. The checksum is a value calculated based on the content of the data files, and it helps to detect data corruption.
+   - **How They Work**: When data is read from HDFS, the checksum is recomputed and compared with the stored checksum in the `.crc` file to ensure data integrity. If there is a mismatch, it indicates that the data might be corrupted.
+   - **Location**: These files are usually hidden and stored in a subdirectory called `.hdfs`, which is created within the directory where the data is written.
+
+### .success Files
+
+2. **Success Indicator Files**:
+   - **Purpose**: `.success` files are used as indicators that a Spark job has completed successfully. They act as a marker to signal the end of a write operation.
+   - **How They Work**: When a Spark job completes successfully, Spark writes an empty file named `_SUCCESS` (often referred to as `.success` files) to the output directory. This file has no content but its presence signifies that the output data is complete and the job was successful.
+   - **Usage**: These files are particularly useful in automated workflows or subsequent processing steps where downstream jobs need to know if the previous job finished correctly. If a `_SUCCESS` file is present, it is safe to assume that the data in that directory is complete and consistent.
