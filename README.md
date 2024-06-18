@@ -2,7 +2,7 @@
 Practice Repo for PySpark Goodness.
 
 ## Streaming Example
-An Example Streaming Application is in the `streaming/` folder.  You can run `streaming-up` which will spin up Containers for the following resources:
+An Example Streaming Application is in the `streaming/` folder.  You can run `make streaming-up` which will spin up Containers for the following resources:
 - Zookeeper
 - Kafka
 - Kafka UI

@@ -26,7 +26,6 @@ jacobs_topic_schema = StructType(
 # https://mvnrepository.com/artifact/org.apache.spark/spark-sql-kafka-0-10_2.12/3.4.1
 spark_packages = ["org.apache.spark:spark-sql-kafka-0-10_2.12/3.4.1"]
 
-# Create a SparkSession object
 spark = (
     SparkSession.builder.appName("ReadFromPostgreSQL")
     .config("spark.driver.host", "localhost")
@@ -34,7 +33,6 @@ spark = (
     .getOrCreate()
 )
 
-# Check Spark + Scala versions
 print("Spark Version:", spark.version)
 print("Scala Version:", spark._jvm.scala.util.Properties.versionString())
 
@@ -57,6 +55,13 @@ df1 = (
 )
 df1.printSchema()
 
-df1.writeStream.outputMode("update").format("console").option(
-    "truncate", False
-).start().awaitTermination()
+# write strea
+
+console_stream = (
+    df1.writeStream.outputMode("update")
+    .format("console")
+    .option("truncate", False)
+    .start()
+)
+
+console_stream.awaitTermination()

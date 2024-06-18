@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     try:
         while True:
-            if invocations > 100:
+            if invocations > 5000:
                 p.flush()
                 logging.info(f"Exiting out ...")
                 break
