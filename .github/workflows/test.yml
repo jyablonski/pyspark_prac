@@ -1,19 +1,15 @@
-name: Prod Test - PR
+name: CI Pipeline
 
 on:
   pull_request:
 
 jobs:
-  run_tests:
-
+  ci_pipeline:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-      - name: Build Docker Image
-        run: |
-          make docker-build
+        uses: actions/checkout@v4
+
       - name: Run Tests
-        run: |
-          make docker-test
+        run: make test
