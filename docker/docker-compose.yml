@@ -1,8 +1,0 @@
-services:
-  pyspark-test:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    image: "pyspark-test"
-    command: python3 -m pytest -v
-    # command: bash -c "while true; do echo hello; sleep 2; done"

@@ -46,7 +46,7 @@ odds.show(20)
 today = datetime.now().date()
 
 boxscores = spark.read.parquet(
-    f"s3a://nba-elt-prod/boxscores/validated/year=2023/month=04/boxscores-2023-04-02.parquet",
+    f"s3a://jyablonski-nba-elt-prod/boxscores/validated/year=2024/month=04/boxscores-2024-04-02.parquet",
     inferSchema=True,
     header=True,
 )
@@ -80,13 +80,23 @@ print(type(psdf))
 # transform boxscores using spark
 # filter >= 35 pts, order by that desc, and then create a case when statement for >= 40 pts
 boxscores_filtered = (
-    boxscores.filter("pts >= 30")
+    boxscores.filter("pts >= 15")
     .sort("pts", ascending=False)
     .withColumn(
         "is_lotta_pts", F.when(F.col("pts") >= 40, "yeaman shore").otherwise("yikes")
     )  # couple different ways to do the filter statement
-    .filter("team == 'DAL'")
-    .filter(F.col("player") == "Luka Doncic")
+    .filter("team == 'BOS'")
+)
+
+boxscores_filtered.show()
+
+boxscores_filtered = (
+    boxscores.filter(F.col("pts") >= 15)
+    .sort(F.col("pts"), ascending=False)
+    .withColumn(
+        "is_lotta_pts", F.when(F.col("pts") >= 40, "yeaman shore").otherwise("yikes")
+    )  # couple different ways to do the filter statement
+    .filter(F.col("team") == "BOS")
 )
 
 boxscores_filtered.show()

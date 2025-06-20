@@ -1,26 +1,15 @@
-.PHONY: docker-build
-docker-build:
-	@docker-compose -f docker/docker-compose.yml build
+.PHONY: build
+build:
+	@docker compose -f docker/docker-compose.yml build
 
-.PHONY: docker-test
-docker-test:
-	@docker-compose -f docker/docker-compose.yml up
+.PHONY: test
+test:
+	@docker compose -f docker/docker-compose-test.yml down
+	@docker compose -f docker/docker-compose-test.yml up --exit-code-from pyspark_test_container
 
 .PHONY: venv
 venv:
 	@poetry shell
-
-.PHONY: test
-test:
-	@pytest -v
-
-.PHONY: start-postgres
-start-postgres:
-	@docker compose -f docker/docker-compose-postgres.yml up --build -d
-
-.PHONY: stop-postgres
-stop-postgres:
-	@docker compose -f docker/docker-compose-postgres.yml down
 
 .PHONY: streaming-build
 streaming-build:

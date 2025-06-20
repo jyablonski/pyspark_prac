@@ -453,3 +453,16 @@ When writing data to HDFS or other similar distributed file systems, two special
    - **Purpose**: `.success` files are used as indicators that a Spark job has completed successfully. They act as a marker to signal the end of a write operation.
    - **How They Work**: When a Spark job completes successfully, Spark writes an empty file named `_SUCCESS` (often referred to as `.success` files) to the output directory. This file has no content but its presence signifies that the output data is complete and the job was successful.
    - **Usage**: These files are particularly useful in automated workflows or subsequent processing steps where downstream jobs need to know if the previous job finished correctly. If a `_SUCCESS` file is present, it is safe to assume that the data in that directory is complete and consistent.
+
+
+### Different Ways to perform Aggs
+
+``` py
+agg1 = boxscores_filtered.agg(F.max("pts")).show()
+agg2 = boxscores_filtered.selectExpr("max(pts) as max_pts_value").show()
+agg3 = boxscores_filtered.select(F.max("pts").alias("max_pts_value")).show()
+agg4 = boxscores_filtered.groupby("team").agg(F.max("pts").alias("max_pts_value")).show()
+```
+
+```
+```
