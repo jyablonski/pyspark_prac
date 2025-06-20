@@ -1,6 +1,16 @@
 services:
+  pyspark_test_container:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: python3 -m pytest -v --color=yes
+    environment:
+      - JUPYTER_PLATFORM_DIRS=1
+    depends_on:
+      - postgres
+
   postgres:
-    image: postgres:14-alpine
+    image: postgres:16-alpine
     container_name: postgres
     ports:
       - 5432:5432

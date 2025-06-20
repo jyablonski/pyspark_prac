@@ -1,14 +1,28 @@
-FROM python:3.11-slim AS base
+FROM python:3.13-slim AS base
 
-ENV POETRY_VIRTUALENVS_IN_PROJECT=1 \
-    POETRY_NO_INTERACTION=1
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH="/.venv/bin:/root/.cargo/bin:$PATH" \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PYTHON=3.13
 
+# install OS-level deps once in base (so we don't repeat in each stage)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 FROM base AS python-deps
 
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml uv.lock ./
 
-RUN pip install poetry
-RUN poetry install
+ARG INSTALL_DEV_DEPENDENCIES=true
+
+RUN pip install uv==0.7.13 && \
+    if [ "$INSTALL_DEV_DEPENDENCIES" = "true" ]; then \
+        uv sync --frozen; \
+    else \
+        uv sync --frozen --no-dev; \
+    fi
+
 
 FROM base AS runtime
 
